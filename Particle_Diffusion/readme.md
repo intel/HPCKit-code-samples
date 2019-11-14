@@ -1,0 +1,112 @@
+# water molecule diffusion sample
+This code sample implements a simple example of a Monte Carlo simulation of the diffusion of water molecules in tissue. This kind of computational experiment can be used to simulate acquisition of a diffusion signal for dMRI.
+
+The model for the simulation consists of water molecules moving through a 2D array of cells in a tissue sample (water molecule diffusion). In this code sample, we use a uniform rectilinear 2D array of digital cells, where cells are spaced regularly along each direction and are represented by circles.
+
+Water molecule diffusion is simulated by defining a number of particles P (simulated water molecules) at random positions in the grid, followed by random walks of these particles in the ensemble of cells in the grid. During the random walks, particles can move randomly inside or outside simulated cells. The positions of these particles at every time step in the simulation, the number of times they go through a cell membrane (in/out), as well as the time every particle spends inside and outside cells can be recorded. These measurements are a simple example of useful information that can be used to simulate an MR signal. 
+
+ For more information and details: https://software.intel.com/en-us/articles/vectorization-of-monte-carlo-simulation-for-diffusion-weighted-imaging-on-intel-xeon
+  
+| Optimized for                       | Description
+|:---                               |:---
+| OS                                | Linux Ubuntu 18.04; Windows 10 or Windows Server 2017
+| Hardware                          | Kaby Lake with GEN9 or newer
+| Software                          | Intel Data Parallel C++ Compiler beta; Intel C++ Compiler xxx beta
+| What you will learn               | How to offload the computation to GPU using Intel DPC++ compiler
+| Time to complete                  | 15 minutes
+
+Performance number tabulation [if applicable]
+
+| motionsim sample                      | Performance data
+|:---                               |:---
+| Scalar baseline -O2               | 1.0
+| SYCL                              | 
+| OpenMP offload                    | 
+
+  
+## Key implementation details [optional]
+SYCL implementation explained. 
+
+
+## How other tools (Intel libraries or Intel tools) are used [optional]
+   
+
+## License  
+This code sample is licensed under MIT license under xxx  
+
+## How to Build  
+
+### on Linux  
+   * Build motionsim program  
+    cd Particle_Diffusion &&  
+    mkdir build &&  
+    cd build &&  
+    cmake ../. &&  
+    make VERBOSE=1  
+
+   * Run the program  
+    make run  
+
+   * Clean the program  
+    make clean  
+
+Example execution:
+
+type src/motionsim.exe 10000 (or type 'make run')
+
+$ src/motionsim.exe 10000
+
+ Running on:: Intel(R) Gen9 HD Graphics NEO
+ The Device Max Work Group Size is : 256
+ The Device Max EUCount is : 72
+ The number of iterations is : 10000
+ The number of particles is : 20
+
+SYCL: Time: 138
+
+
+ ********************** OUTPUT GRID:
+
+  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0   0 367  27  16   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0  84 750  98  84   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0 669   0 116  55   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0 130 211 250 170  35  30 261   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0  10 353 539 243 809  61 878 174   0   0   0   0   0   0
+  0   0   0   0   0   0   1 118 1628 1050 1678 887 864 272  80 390   0   0   0   0   0
+  0   0   0   0   0   0   0  39 1173 1660 3549 1263 1155 2185 234   0   0   0   0   0   0
+  0   0   0   0   0   0 306 599 609 537 550 1134 1172 1261  13   0   0   0   0   0   0
+  0   0   0   0   0   0 283 120  92 282 851 512 658 872  40   0   0   0   0   0   0
+  0   0   0   0   0 157 284 133 817 151 175 271 147 286  57   0   0   0   0   0   0
+  0   0   0   0   0   0 294 428   0   0   0   0   0  17   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0 364   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0 182   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+
+$
+
+### on Windows - command line 
+
+Start a command window from "Programs > Intel oneAPI 2021 > Intel oneAPI Command Prompt":
+
+   * Build the program using nmake 
+1. nmake -f Makefile.win clean
+2. nmake -f Makefile.win
+3. nmake -f Makefile.win run
+   * Build the program using MSBuild
+
+   MSBuild Particle_Diffusion.sln /t:Rebuild /p:Configuration="debug" 
+
+### on Windows - Visual Studio 2017 or newer
+
+   * Open Visual Studio 2017 
+   * Select Menu "File > Open > Project/Solution", find "Particle-Diffusion" folder and select "Particle_Diffusion.sln" 
+   * Select Menu "Project > Build" to build the selected configuration 
+   * Select Menu "Debug > Start Without Debugging" to run the program 
+
