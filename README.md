@@ -8,6 +8,7 @@ The code samples are under each component folder. Currently following code sampl
 | matrix_mul                                 | GPU, CPU                     | Simple program that multiplies two large matrices in parallel using DPC++, OpenMP and MKL
 | Particle_Diffusion                                  | GPU, CPU                     | a simple (non-optimized) implementation of a Monte Carlo simulation of the diffusion of water molecules in tissue
 | iso3dfd_dpcpp                                  | GPU, CPU                     | A finite difference stencil kernel for solving 3D acoustic isotropic wave equation using DPC++
+| iso2dfd_dpcpp                                  | GPU, CPU                     | A simple finite difference stencil kernel for solving 2D acoustic isotropic wave equation using DPC++
 | iso3dfd_omp_offload                                  | GPU, CPU                     | A finite difference stencil kernel for solving 3D acoustic isotropic wave equation using OpenMP
 
 
