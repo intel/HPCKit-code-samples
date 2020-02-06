@@ -1,11 +1,13 @@
 # ISO2DFD sample
-ISO2DFD is a finite difference stencil kernel for solving the 2D acoustic isotropic wave equation. Kernels in this sample are implemented as 2nd order in space, 2nd order in time scheme without boundary conditions. This sample code is implemented using Data Parallel C++ for CPU and GPU.
+ISO2DFD is a finite difference stencil kernel for solving the 2D acoustic isotropic wave equation. Kernels in this sample are implemented as 2nd order in space, 2nd order in time scheme without boundary conditions. This sample code is implemented using Data Parallel C++ for CPU and GPU. 
+
+Find more information about the algorithm and implementation in the associated tutorial at https://software.intel.com/en-us/articles/code-sample-two-dimensional-finite-difference-wave-propagation-in-isotropic-media-iso2dfd
   
 | Optimized for                       | Description
 |:---                               |:---
 | OS                                | Linux Ubuntu 18.04
 | Hardware                          | Skylake with GEN9 or newer
-| Software                          | Intel&reg; oneAPI DPC++ Compiler (beta); Intel C++ Compiler xxx beta
+| Software                          | Intel&reg; oneAPI DPC++ Compiler (beta); Intel C++ Compiler (beta)
 | What you will learn               | How to offload the computation to GPU using Intel DPC++ compiler
 | Time to complete                  | 10 minutes
 
@@ -14,7 +16,7 @@ ISO2DFD is a finite difference stencil kernel for solving the 2D acoustic isotro
 SYCL implementation explained. 
 
 ## License  
-This code sample is licensed under MIT license under xxx  
+This code sample is licensed under MIT license  
 
 ## How to Build  
 

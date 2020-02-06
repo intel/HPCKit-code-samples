@@ -22,8 +22,8 @@ License: MIT license
 ## How to Build  
 
 ### on Linux  
-   * Build nbody program  
-    cd nbody &&  
+   * Build Nbody program  
+    cd Nbody &&  
     mkdir build &&  
     cd build &&  
     cmake ../. &&  
@@ -49,10 +49,10 @@ License: MIT license
 
 ### Profiling the application
     * export SAPPC=/opt/intel/inteloneapi/advisor/latest/perfmodels
-      python2 $SAPPC/collect.py ./advisor_nbody_project -- make run
+      advixe-python $SAPPC/collect.py ./advisor_nbody_project -- make run
       
 ### Running Performance Modeling
-    * python2 $SAPPC/analyze.py --config gen9 ./advisor_nbody_project -o ./advisor_nbody_result
+    * advixe-python $SAPPC/analyze.py --config gen9 ./advisor_nbody_project -o ./advisor_nbody_result
     Open the report.html inside advisor_nbody_result directory to view the Offload Advisor report on identified potential offload regions and performance projections on GEN9 graphics
 
 ***Offload Advisor feature is not available on Windows**

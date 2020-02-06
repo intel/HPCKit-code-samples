@@ -1,11 +1,11 @@
 DPCPP_CXX = dpcpp
-DPCPP_CXXFLAGS = -o
+DPCPP_CXXFLAGS = -g -o
 DPCPP_LDFLAGS = 
 DPCPP_EXE_NAME = matrix_mul_dpc
 DPCPP_SOURCES = src/matrix_mul_dpcpp.cpp
 
 CXX = icc
-OMP_CXXFLAGS = -qnextgen -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -o
+OMP_CXXFLAGS = -qnextgen -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -g -o
 OMP_LDFLAGS = 
 OMP_EXE_NAME = matrix_mul_omp
 OMP_SOURCES = src/matrix_mul_omp.cpp

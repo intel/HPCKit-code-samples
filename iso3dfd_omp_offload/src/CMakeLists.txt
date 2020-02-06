@@ -1,6 +1,7 @@
 OPTION(TILING "Use Tiling Optimizations" OFF)
 OPTION(VERIFY_RESULTS "Use Results Validation" OFF)
 
+set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qnextgen -fiopenmp -std=c++11 -fopenmp-targets=spir64 -O3 -D__STRICT_ANSI__ ")
 
 set(SOURCES iso3dfd.cpp utils.cpp)

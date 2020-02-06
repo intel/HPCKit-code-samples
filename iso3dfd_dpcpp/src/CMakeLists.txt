@@ -1,4 +1,5 @@
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+set(CMAKE_BUILD_TYPE "RelWithDebInfo") 
 
 OPTION(SHARED_KERNEL "Use SLM Kernel Version - Only for GPU" OFF)
 if(SHARED_KERNEL)

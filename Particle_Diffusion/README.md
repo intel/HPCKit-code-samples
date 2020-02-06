@@ -11,7 +11,7 @@ Water molecule diffusion is simulated by defining a number of particles P (simul
 |:---                               |:---
 | OS                                | Linux Ubuntu 18.04; Windows 10 or Windows Server 2017
 | Hardware                          | Kaby Lake with GEN9 or newer
-| Software                          | Intel Data Parallel C++ Compiler beta; Intel C++ Compiler xxx beta
+| Software                          | Intel Data Parallel C++ Compiler (beta)
 | What you will learn               | How to offload the computation to GPU using Intel DPC++ compiler
 | Time to complete                  | 15 minutes
 
@@ -32,7 +32,7 @@ SYCL implementation explained.
    
 
 ## License  
-This code sample is licensed under MIT license under xxx  
+This code sample is licensed under MIT license  
 
 ## How to Build  
 

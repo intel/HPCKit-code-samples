@@ -6,5 +6,5 @@
   "languages": [ { "cpp": {} } ],
   "targetDevice": [ "CPU", "GPU" ],
   "os": [ "linux", "windows" ],
-  "builder": [ "ide", "make" ]
+  "builder": [ "ide", "cmake" ]
 }

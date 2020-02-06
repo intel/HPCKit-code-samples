@@ -1,5 +1,5 @@
 DPCPP_CXX = dpcpp-cl
-DPCPP_CXXFLAGS = -O2 -EHsc
+DPCPP_CXXFLAGS = /Zi /EHsc
 DPCPP_LDFLAGS = 
 DPCPP_EXE_NAME = matrix_mul_dpcpp.exe
 DPCPP_SOURCES = src/matrix_mul_dpcpp.cpp
@@ -30,4 +30,4 @@ run_mkl:
 
 
 clean: 
-	del -rf $(DPCPP_EXE_NAME) $(MKL_EXE_NAME)
+	del -rf $(DPCPP_EXE_NAME) $(MKL_EXE_NAME) *.pdb

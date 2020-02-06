@@ -1,5 +1,5 @@
 //==============================================================
-// Copyright © 2019 Intel Corporation
+// Copyright © 2020 Intel Corporation
 //
 // SPDX-License-Identifier: MIT
 // =============================================================
@@ -14,6 +14,17 @@
 #include "GSimulation.hpp"
 #include<chrono>
 using namespace cl::sycl;
+
+auto exception_handler = [](exception_list list){
+        for(auto &excep_ptr : list){
+                try{
+                        std::rethrow_exception(excep_ptr);
+                } catch (exception &e){
+                        std::cout<<"Asynchronous Exception caught: "<<e.what()<<"\n";
+                }
+                std::terminate();
+        }
+};
 
 GSimulation :: GSimulation()
 {
@@ -115,7 +126,7 @@ void GSimulation :: start()
   int nf = 0;
 
   default_selector defaultSelector;
-  queue defaultQueue(defaultSelector);
+  queue defaultQueue(defaultSelector, exception_handler);
 
   buffer<Particle, 1> buf(particles, range<1>(n), {cl::sycl::property::buffer::use_host_ptr()});
   buffer<real_type, 1> ener(energy, range<1>(n), {cl::sycl::property::buffer::use_host_ptr()});
@@ -155,7 +166,7 @@ void GSimulation :: start()
       ptr[i].acc[1] = acc1;
       ptr[i].acc[2] = acc2;
     });
-    });
+    }).wait_and_throw();
     defaultQueue.submit([&](handler& cgh) {
     auto ptr = buf.get_access<access::mode::read_write>(cgh);
     auto ptr_ener = ener.get_access<access::mode::read_write>(cgh);
@@ -178,7 +189,7 @@ void GSimulation :: start()
                 ptr[i].vel[1]*ptr[i].vel[1] +
                 ptr[i].vel[2]*ptr[i].vel[2]); //7flops
     });
-    });
+    }).wait_and_throw();
 
     defaultQueue.submit([&](handler& cgh) {
         auto ptr_ener = ener.get_access<access::mode::read_write>(cgh);
@@ -186,8 +197,7 @@ void GSimulation :: start()
         for(int i = 1; i < n; i++)
                 ptr_ener[0] += ptr_ener[i];
         });
-    });
-    defaultQueue.wait();
+    }).wait_and_throw();
     auto host_ptr_ener = ener.get_access<access::mode::read_write>();
     _kenergy = 0.5 * host_ptr_ener[0];
     host_ptr_ener[0] = 0;
@@ -225,7 +235,7 @@ void GSimulation :: start()
   std::cout << std::endl;
   std::cout << "# Number Threads     : " << nthreads << std::endl;
   std::cout << "# Total Time (s)     : " << _totTime << std::endl;
-  std::cout << "# Average Perfomance : " << av << " +- " <<  dev << std::endl;
+  std::cout << "# Average Performance : " << av << " +- " <<  dev << std::endl;
   std::cout << "===============================" << std::endl;
 
 }

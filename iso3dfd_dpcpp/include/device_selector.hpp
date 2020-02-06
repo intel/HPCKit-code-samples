@@ -1,5 +1,5 @@
 //==============================================================
-// Copyright © 2019 Intel Corporation
+// Copyright © 2020 Intel Corporation
 //
 // SPDX-License-Identifier: MIT
 // =============================================================
@@ -7,11 +7,10 @@
 #ifndef DEVICESELECTOR_HPP
 #define DEVICESELECTOR_HPP
 
-#include <string>
 #include <cstring>
 #include <iostream>
+#include <string>
 #include "CL/sycl.hpp"
-
 
 // This is the class provided to SYCL runtime by the application to decide
 // on which device to run, or whether to run at all.
@@ -22,9 +21,9 @@
 // was returned for all devices, then the selection process will cause an
 // exception.
 class MyDeviceSelector : public cl::sycl::device_selector {
-public:
+ public:
   MyDeviceSelector(const std::string &p) : pattern(p) {
-    //std::cout << "Looking for \"" << p << "\" devices" << std::endl;
+    // std::cout << "Looking for \"" << p << "\" devices" << std::endl;
   }
 
   // This is the function which gives a "rating" to devices.
@@ -33,16 +32,16 @@ public:
     // defined by the SYCL spec's cl::sycl::info:: enum. Properties may have
     // different types. Here we query name which is a string.
     const std::string name = device.get_info<cl::sycl::info::device::name>();
-    //std::cout << "Trying device: " << name << "..." << std::endl;
-    //std::cout << "  Vendor: " << device.get_info<cl::sycl::info::device::vendor>() << std::endl;
+    // std::cout << "Trying device: " << name << "..." << std::endl;
+    // std::cout << "  Vendor: " <<
+    // device.get_info<cl::sycl::info::device::vendor>() << std::endl;
 
     // Device with pattern in the name is skipped:
     return (name.find(pattern) != std::string::npos) ? 100 : 1;
   }
 
-private:
+ private:
   std::string pattern;
 };
 
 #endif
-

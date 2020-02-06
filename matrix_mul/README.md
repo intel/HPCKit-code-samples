@@ -35,7 +35,7 @@ This code sample is licensed under MIT license.
     make clean 
 
 ### on Windows
-The OpenMP offload target is not supported in beta02. 
+The OpenMP offload target is not supported on Windows yet. 
 
 #### Command Line using MSBuild
    * MSBuild matrix_mul.sln /t:Rebuild /p:Configuration="release"  

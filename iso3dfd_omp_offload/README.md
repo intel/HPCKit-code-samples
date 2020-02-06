@@ -9,12 +9,6 @@ ISO3DFD is a finite difference stencil kernel for solving 3D acoustic isotropic 
 | What you will learn               | How to offload the computation to GPU using OpenMP offload pragmas
 | Time to complete                  | 15 minutes
 
-Performance number tabulation [Dummy data for now]
-
-| iso3dfd                           | Performance data
-|:---                               |:---
-| Scalar baseline -O2               | 1.0
-
   
 ## Key implementation details [optional]
 OpenMP Offload implementation explained. 
@@ -22,14 +16,14 @@ OpenMP Offload implementation explained.
 You're encourage to use any infographics to increase readibility and clarity which is strongly recommended by UX team based on customer feedbacks. 
 
 ## License  
-This code sample is licensed under MIT license under xxx  
+This code sample is licensed under MIT license 
 
 ## How to Build  
 
 ### on Linux  
-   * Build iso3dfd  
+   * Build iso3dfd_omp_offload  
     
-    cd iso3dfd &&  
+    cd iso3dfd_omp_offload &&  
     mkdir build &&  
     cd build &&  
     cmake .. &&  
@@ -45,7 +39,7 @@ This code sample is licensed under MIT license under xxx
 
 ## How to Run  
    * Application Parameters   
-	Usage: ./iso3dfd n1 n2 n3 b1 b2 b3 Iterations
+	Usage: ./src/iso3dfd n1 n2 n3 b1 b2 b3 Iterations
 	
 	n1 n2 n3      : Grid sizes for the stencil
 	b1 b2 b3      : Cache block sizes for cpu openmp version OR
