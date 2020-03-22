@@ -1,5 +1,5 @@
 //==============================================================
-// Copyright © 2020 Intel Corporation
+// Copyright Â© 2020 Intel Corporation
 //
 // SPDX-License-Identifier: MIT
 // =============================================================
@@ -148,7 +148,7 @@ int VerifyResult(double (*c_back)[P]) {
   b_host = new double[N][P];
   c_host = new double[M][P];
     
-  // a_host is identity matrix
+  // a_host is all 1's
   for (i=0; i<M; i++)
     for (j=0; j<N; j++)
       a_host[i][j] = 1.0;
