@@ -22,6 +22,7 @@ This code sample is licensed under MIT license.
 
 ### on Linux
 *  Build the program using CMake
+
      cd mandelbrot && 
      mkdir build &&
      cd build &&
@@ -43,3 +44,6 @@ This code sample is licensed under MIT license.
 * Build the program using MSBuild
       Open "x64 Native Tools Command Prompt for VS2017" or "x64 Native Tools Command Prompt for VS2019"
       Run - MSBuild mandelbrot.sln /t:Rebuild /p:Configuration="Release"
+
+Note:To view Output image, please open the saved image mandelbrot.png.
+Note on Linux: There is a known issue discovered when running Mandelbrot on Level-Zero GPU driver,  so OpenCL GPU driver is used when running Mandelbrot bu setting environment variable “SYCL_BE=PI_OPENCL

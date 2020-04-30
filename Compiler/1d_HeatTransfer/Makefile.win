@@ -1,0 +1,18 @@
+CXX = dpcpp-cl
+CXXFLAGS = -EHsc -Zi -fsycl -std:c++17
+LDFLAGS = 
+EXE_NAME = 1d_HeatTransfer.exe
+ILK_NAME = 1d_HeatTransfer.ilk
+PDB_NAME = 1d_HeatTransfer.pdb
+SOURCES = 1d_HeatTransfer.cpp
+
+all: main
+
+main:
+	$(CXX) $(CXXFLAGS) -o $(EXE_NAME) src\$(SOURCES) $(LDFLAGS)
+
+run: 
+	$(EXE_NAME) 100 1000
+
+clean: 
+	del -rf $(EXE_NAME) $(ILK_NAME) $(PDB_NAME)

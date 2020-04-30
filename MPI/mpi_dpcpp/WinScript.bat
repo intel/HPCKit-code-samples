@@ -1,0 +1,1 @@
+dpcpp-cl -EHsc -Zi -fsycl -std:c++17 -o mpi_dpcpp.exe src\mpi_dpcpp.cpp -I"C:\Program Files (x86)\inteloneapi\mpi\latest\env\..\include" /link /LIBPATH:"C:\Program Files (x86)\inteloneapi\mpi\latest\env\..\lib\release" /LIBPATH:"C:\Program Files (x86)\inteloneapi\mpi\latest\env\..\lib" impi.lib impicxx.lib

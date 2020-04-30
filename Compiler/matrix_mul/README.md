@@ -1,22 +1,23 @@
 # matrix_mul sample
 matrix_mul is a simple program that multiplies together two large matrices and verifies the results. 
-This program is implemented using three ways: 
+This program is implemented using two ways: 
     1. C++ and SYCL language;
     2. C++ and OpenMP (Linux* only);
-    3. C++ and oneMKL;
+If successful, the name of the offload device and a success message are displayed.
+
+For comprehensive instructions regarding DPC++ Programming, go to https://software.intel.com/en-us/oneapi-programming-guide and search based on relevant terms noted in the comments.
   
 | Optimized for                       | Description
 |:---                               |:---
 | OS                                | Linux* Ubuntu* 18.04, Windows 10*
 | Hardware                          | Skylake with GEN9 or newer
-| Software                          | Intel&reg; oneAPI DPC++ Compiler beta, oneMKL, Intel&reg; C/C++ Compiler beta
-| What you will learn               | Offloads computations on 2D arrays to GPU using Intel DPC++, OpenMP and oneMKL
+| Software                          | Intel&reg; oneAPI DPC++ Compiler beta, Intel&reg; C/C++ Compiler beta
+| What you will learn               | Offloads computations on 2D arrays to GPU using Intel DPC++ and OpenMP
 | Time to complete                  | 15 minutes  
 
 ## Key implementation details
 SYCL implementation explained. 
 OpenMP offload implementation explained. 
-oneMKL implementation explained.
 
 ## License  
 This code sample is licensed under MIT license. 
@@ -41,10 +42,6 @@ The OpenMP offload target is not supported on Windows yet.
    * MSBuild matrix_mul.sln /t:Rebuild /p:Configuration="release"  
 
 #### Command Line using nmake
-   Build matrix_mul oneMKL version
-   * nmake -f Makefile.win build_mkl  
-   * nmake -f Makefile.win run_mkl  
-
    Build matrix_mul DPCPP version
    * nmake -f Makefile.win build_dpcpp  
    * nmake -f Makefile.win run_dpcpp  
@@ -68,15 +65,3 @@ The OpenMP offload target is not supported on Windows yet.
    * Clean the program  
     make clean
 
-## How to Build for oneMKL
-
-### on Linux  
-   * Build the program using Make  
-    cd matrix_mul &&  
-    make build_mkl  
-
-   * Run the program  
-    make run_mkl  
-
-   * Clean the program  
-    make clean

@@ -46,7 +46,7 @@ void Execute(queue &q) {
 
   // Print the results
   m_par.Print();
-
+  m_par.writeImage();
   // Run the serial version
   dpc_common::MyTimer t_ser;
   m_ser.Evaluate();
@@ -74,10 +74,11 @@ int main(int argc, char *argv[]) {
   }
 
   try {
+
     // Create a queue on the default device
     // Set the SYCL_DEVICE_TYPE environment variable
     // to (CPU|GPU|FPGA|HOST) to change the device
-    auto q = dpc_common::MyQueue();
+    queue q (default_selector{},dpc_common::exception_handler);
     // display the device info
     ShowDevice(q);
     // launch the body of the application

@@ -30,21 +30,37 @@
 
 #include <fstream>
 #include <iostream>
-#include "iso2dfd.h"
+#include <CL/sycl.hpp>
+#include <chrono>
+#include <cmath>
+#include <cstring>
+#include <ctime>
+#include <stdio.h>
 
-#define MIN(a, b) (a) < (b) ? (a) : (b)
+using namespace cl::sycl;
+
+/*
+ * Parameters to define coefficients
+ * HALF_LENGTH: Radius of the stencil
+ * Sample source code is tested for HALF_LENGTH=1 resulting in
+ * 2nd order Stencil finite difference kernel
+ */
+
+constexpr float DT = 0.002f;
+constexpr float DXY = 20.0f;
+constexpr unsigned int HALF_LENGTH = 1;
 
 /*
  * Host-Code
  * Utility function to display input arguments
  */
 void usage(std::string programName) {
-  std::cout << " Incorrect parameters " << std::endl;
+  std::cout << " Incorrect parameters " << "\n";
   std::cout << " Usage: ";
-  std::cout << programName << " n1 n2 Iterations " << std::endl
-            << std::endl;
-  std::cout << " n1 n2      : Grid sizes for the stencil " << std::endl;
-  std::cout << " Iterations : No. of timesteps. " << std::endl;
+  std::cout << programName << " n1 n2 Iterations " << "\n"
+            << "\n";
+  std::cout << " n1 n2      : Grid sizes for the stencil " << "\n";
+  std::cout << " Iterations : No. of timesteps. " << "\n";
 }
 
 /*
@@ -53,7 +69,7 @@ void usage(std::string programName) {
  */
 void initialize(float* ptr_prev, float* ptr_next, float* ptr_vel, size_t nRows,
                 size_t nCols) {
-  std::cout << "Initializing ... " << std::endl;
+  std::cout << "Initializing ... " << "\n";
 
   // Define source wavelet
   float wavelet[12] = {0.016387336, -0.041464937, -0.067372555, 0.386110067,
@@ -68,7 +84,7 @@ void initialize(float* ptr_prev, float* ptr_next, float* ptr_vel, size_t nRows,
       ptr_prev[offset + k] = 0.0f;
       ptr_next[offset + k] = 0.0f;
       // pre-compute squared value of sample wave velocity v*v (v = 1500 m/s)
-      ptr_vel[offset + k] = 2250000.0f;
+      ptr_vel[offset + k] = (1500.0f * 1500.0f);
     }
   }
   // Add a source to initial wavefield as an initial condition
@@ -89,16 +105,16 @@ void initialize(float* ptr_prev, float* ptr_next, float* ptr_vel, size_t nRows,
 void printTargetInfo(queue& q) {
   auto device = q.get_device();
   auto maxBlockSize =
-      device.get_info<cl::sycl::info::device::max_work_group_size>();
+      device.get_info<info::device::max_work_group_size>();
 
   auto maxEUCount =
-      device.get_info<cl::sycl::info::device::max_compute_units>();
+      device.get_info<info::device::max_compute_units>();
 
-  std::cout << " Running on " << device.get_info<cl::sycl::info::device::name>()
-            << std::endl;
+  std::cout << " Running on " << device.get_info<info::device::name>()
+            << "\n";
   std::cout << " The Device Max Work Group Size is : " << maxBlockSize
-            << std::endl;
-  std::cout << " The Device Max EUCount is : " << maxEUCount << std::endl;
+            << "\n";
+  std::cout << " The Device Max EUCount is : " << maxEUCount << "\n";
 }
 
 /*
@@ -109,11 +125,15 @@ void printTargetInfo(queue& q) {
 bool within_epsilon(float* output, float* reference, const size_t dimx,
                     const size_t dimy, const unsigned int radius,
                     const float delta = 0.01f) {
-  FILE* fp = fopen("./error_diff.txt", "w");
-  if (!fp) fp = stderr;
+  //FILE *fp;
+  //file_error = fopen_s(&fp, "./error_diff.txt", "w");
+  //if (!file_error) fp = stderr;
+  //FILE* fp = fopen("./error_diff.txt", "w");
+  //if (!fp) fp = stderr;
+  std::ofstream errFile;
+  errFile.open("error_diff.txt");
 
   bool error = false;
-  float abs_delta = fabsf(delta);
   double norm2 = 0;
 
   for (size_t iy = 0; iy < dimy; iy++) {
@@ -124,8 +144,8 @@ bool within_epsilon(float* output, float* reference, const size_t dimx,
         norm2 += difference * difference;
         if (difference > delta) {
           error = true;
-          fprintf(fp, " ERROR: (%zu,%zu)\t%e instead of %e (|e|=%e)\n", ix, iy,
-                  *output, *reference, difference);
+          errFile<<" ERROR: "<<ix<<", "<<iy<<"   "<<*output<<"   instead of "<<
+                   *reference<<"  (|e|="<<difference<<")" <<"\n";
         }
       }
 
@@ -134,7 +154,8 @@ bool within_epsilon(float* output, float* reference, const size_t dimx,
     }
   }
 
-  if (fp != stderr) fclose(fp);
+  //if (fp != stderr) fclose(fp);
+  errFile.close();
   norm2 = sqrt(norm2);
   if (error) printf("error (Euclidean norm): %.9e\n", norm2);
   return error;
@@ -180,7 +201,7 @@ void iso_2dfd_iteration_cpu(float* next, float* prev, float* vel,
  * Range kernel is used to spawn work-items in x, y dimension
  *
  */
-void iso_2dfd_iteration_global(item<2> it, float* next, float* prev,
+void iso_2dfd_iteration_global(id<2> it, float* next, float* prev,
                                float* vel, const float dtDIVdxy, int nRows,
                                int nCols) {
   float value = 0.0;
@@ -189,8 +210,8 @@ void iso_2dfd_iteration_global(item<2> it, float* next, float* prev,
   // We can use the get.global.id() function of the item variable
   //   to compute global id. The 2D array is laid out in memory in row major
   //   order.
-  size_t gidRow = it.get_id(0);
-  size_t gidCol = it.get_id(1);
+  size_t gidRow = it.get(0);
+  size_t gidCol = it.get(1);
   size_t gid = (gidRow)*nCols + gidCol;
 
   // Computation to solve wave equation in 2D
@@ -250,17 +271,12 @@ int main(int argc, char* argv[]) {
   // Initialize arrays and introduce initial conditions (source)
   initialize(prev_base, next_base, vel_base, nRows, nCols);
 
-  std::cout << "Grid Sizes: " << nRows << " " << nCols << std::endl;
-  std::cout << "Iterations: " << nIterations << std::endl;
-  std::cout << std::endl;
+  std::cout << "Grid Sizes: " << nRows << " " << nCols << "\n";
+  std::cout << "Iterations: " << nIterations << "\n";
+  std::cout << "\n";
 
-  // Start timer
-  auto start = std::chrono::steady_clock::now();
-
-  // Define device selector as 'host', 'GPU' or 'default'
+  // Define device selector as 'default'
   default_selector device_selector;
-  // host_selector device_selector;
-  // gpu_selector device_selector;
 
   // exception handler
   /*
@@ -282,9 +298,12 @@ int main(int argc, char* argv[]) {
   // Create a device queue using DPC++ class queue
   queue q(device_selector, exception_handler);
 
-  std::cout << "Computing wavefield in device .." << std::endl;
+  std::cout << "Computing wavefield in device .." << "\n";
   // Display info about device
   printTargetInfo(q);
+
+  // Start timer
+  auto start = std::chrono::steady_clock::now();
 
   {  // Begin buffer scope
     // Create buffers using DPC++ class buffer
@@ -295,11 +314,11 @@ int main(int argc, char* argv[]) {
     // Iterate over time steps
     for (unsigned int k = 0; k < nIterations; k += 1) {
       // Submit command group for execution
-      q.submit([&](handler& cgh) {
+      q.submit([&](auto &h) {
         // Create accessors
-        auto next = b_next.get_access<access::mode::read_write>(cgh);
-        auto prev = b_prev.get_access<access::mode::read_write>(cgh);
-        auto vel = b_vel.get_access<access::mode::read>(cgh);
+        auto next = b_next.get_access<access::mode::read_write>(h);
+        auto prev = b_prev.get_access<access::mode::read_write>(h);
+        auto vel = b_vel.get_access<access::mode::read>(h);
 
         // Define local and global range
         auto global_range = range<2>(nRows, nCols);
@@ -310,15 +329,13 @@ int main(int argc, char* argv[]) {
         //    alternating the 'next' and 'prev' parameters which effectively
         //    swaps their content at every iteration.
         if (k % 2 == 0)
-          cgh.parallel_for<class iso_2dfd_kernel>(
-              range<2>{global_range}, [=](item<2> it) {
+          h.parallel_for(global_range, [=](id<2> it) {
                 iso_2dfd_iteration_global(it, next.get_pointer(),
                                           prev.get_pointer(), vel.get_pointer(),
                                           dtDIVdxy, nRows, nCols);
               });
         else
-          cgh.parallel_for<class iso_2dfd_kernel_2>(
-              range<2>{global_range}, [=](item<2> it) {
+          h.parallel_for(global_range, [=](id<2> it) {
                 iso_2dfd_iteration_global(it, prev.get_pointer(),
                                           next.get_pointer(), vel.get_pointer(),
                                           dtDIVdxy, nRows, nCols);
@@ -329,16 +346,14 @@ int main(int argc, char* argv[]) {
 
   }  // buffer scope
 
-  // Wait for the commands to complete. Enforce synchronization on the command
-  // queue
+  // Wait for commands to complete. Enforce synchronization on the command queue
   q.wait_and_throw();
 
   // Compute and display time used by device
   auto end = std::chrono::steady_clock::now();
-  auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-                  .count();
-  std::cout << "SYCL time: " << time << " ms" << std::endl;
-  std::cout << std::endl;
+  auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+  std::cout << "Kernel time: " << time << " ms" << "\n";
+  std::cout << "\n";
 
   // Output final wavefield (computed by device) to binary file
   std::ofstream outFile;
@@ -348,7 +363,7 @@ int main(int argc, char* argv[]) {
 
   // Compute wavefield on CPU (for validation)
   
-  std::cout << "Computing wavefield in CPU .." << std::endl;
+  std::cout << "Computing wavefield in CPU .." << "\n";
   // Re-initialize arrays
   initialize(prev_base, next_cpu, vel_base, nRows, nCols);
 
@@ -360,23 +375,21 @@ int main(int argc, char* argv[]) {
 
   // Compute and display time used by CPU
   end = std::chrono::steady_clock::now();
-  time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-                  .count();
-  std::cout << "CPU time: " << time << " ms" << std::endl;
-  std::cout << std::endl;
+  time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+  std::cout << "CPU time: " << time << " ms" << "\n";
+  std::cout << "\n";
 
   // Compute error (difference between final wavefields computed in device and
   // CPU)
   error = within_epsilon(next_base, next_cpu, nRows, nCols, HALF_LENGTH, 0.1f);
 
-  // If error greater than threshold (last parameter in error function call),
-  // report
+  // If error greater than threshold (last parameter in error function), report
   if (error)
     std::cout << "Final wavefields from device and CPU are different: Error "
-              << std::endl;
+              << "\n";
   else
     std::cout << "Final wavefields from device and CPU are equivalent: Success"
-              << std::endl;
+              << "\n";
 
   // Output final wavefield (computed by CPU) to binary file
   outFile.open("wavefield_snapshot_cpu.bin", std::ios::out | std::ios::binary);
@@ -384,8 +397,8 @@ int main(int argc, char* argv[]) {
   outFile.close();
 
   std::cout << "Final wavefields (from device and CPU) written to disk"
-            << std::endl;
-  std::cout << "Finished.  " << std::endl;
+            << "\n";
+  std::cout << "Finished.  " << "\n";
 
   // Cleanup
   delete[] prev_base;

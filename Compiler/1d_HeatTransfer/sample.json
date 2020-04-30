@@ -1,10 +1,10 @@
 {
-  "name": "iso3dfd_dpcpp",
+  "name": "1d_HeatTransfer",
   "categories": [ "Toolkit/Intel® oneAPI HPC Toolkit" ],
-  "description": "A finite difference stencil kernel for solving 3D acoustic isotropic wave equation",
+  "description": "1D_HEAT_TRANSFER: Simulating 1D Heat Transfer problem Using Intel® oneAPI DPC++ Language",
   "toolchain": [ "dpcpp" ],
   "targetDevice": [ "CPU", "GPU" ],
   "languages": [ { "cpp": {} } ],
   "os": [ "linux", "windows" ],
-  "builder": [ "ide" ]
+  "builder": [ "ide", "make" ]
 }

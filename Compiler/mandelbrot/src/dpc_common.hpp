@@ -23,19 +23,6 @@ static auto exception_handler = [](cl::sycl::exception_list eList) {
   }
 };
 
-class MyQueue : public cl::sycl::queue {
-  // Enable profiling by default
-  cl::sycl::property_list prop_list =
-      cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
-
- public:
-   MyQueue()
-      : cl::sycl::queue(cl::sycl::default_selector{}, exception_handler, prop_list) {}
-   MyQueue(cl::sycl::device_selector &d)
-      : cl::sycl::queue(d, exception_handler, prop_list) {}
-   MyQueue(cl::sycl::device_selector &d, cl::sycl::property_list &p)
-      : cl::sycl::queue(d, exception_handler, p) {}
-};
 
 using Duration = std::chrono::duration<double>;
 

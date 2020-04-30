@@ -10,10 +10,15 @@
 #include <exception>
 #include <iomanip>
 #include <iostream>
+#define STB_IMAGE_IMPLEMENTATION
+#include "../stb/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../stb/stb_image_write.h"
+
 using namespace cl::sycl;
 
-constexpr int row_size = 100;
-constexpr int col_size = 100;
+constexpr int row_size = 512;
+constexpr int col_size = 512;
 constexpr int max_iterations = 100;
 constexpr int repetitions = 100;
 
@@ -72,11 +77,45 @@ class Mandel {
   ~Mandel() { delete[] data_; }
 
   MandelParameters GetParameters() const { return p_; }
+  
+
+   void writeImage()
+  {
+    constexpr int channel_num { 3 };
+    int row_count_ = p_.row_count();
+    int col_count_ = p_.col_count();
+
+    uint8_t *pixels_ = new uint8_t[col_count_ * row_count_ * channel_num];
+
+    int index = 0;
+
+    for (int j = 0; j < row_count_; ++j)
+    {
+      for (int i = 0; i < col_count_; ++i)
+      {
+       float r = data_[i * col_count_ + j]/255.f;
+       float g = 0.0f;
+       float b = 0.0f;
+
+        int ir = int(255.99 * r);
+        int ig = int(255.99 * g);
+        int ib = int(255.99 * b);
+
+        pixels_[index++] = ir;
+        pixels_[index++] = ig;
+        pixels_[index++] = ib;
+      }
+    }
+
+    stbi_write_png("mandelbrot.png", row_count_, col_count_, channel_num, pixels_, col_count_ * channel_num);
+  }
+
+
 
   // use only for debugging with small dimensions
   void Print() {
     if (p_.row_count() > 128 || p_.col_count() > 128) {
-      std::cout << "No Print() output due to size too large" << std::endl;
+      std::cout << "No output to console due to large size. Output saved to mandelbrot.png. " << std::endl;
       return;
     }
     for (int i = 0; i < p_.row_count(); ++i) {

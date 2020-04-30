@@ -61,3 +61,13 @@ This code sample is licensed under MIT license
 
    * Find graphical output for sample execution in the online tutorial at:
      https://software.intel.com/en-us/articles/code-sample-two-dimensional-finite-difference-wave-propagation-in-isotropic-media-iso2dfd
+
+### on Windows
+    * Build the program using VS2017 or VS2019
+      Right click on the solution file and open using either VS2017 or VS2019 IDE.
+      Right click on the project in Solution explorer and select Rebuild.
+      From top menu select Debug -> Start without Debugging.
+
+    * Build the program using MSBuild
+      Open "x64 Native Tools Command Prompt for VS2017" or "x64 Native Tools Command Prompt for VS2019"
+      Run - MSBuild iso2dfd.sln /t:Rebuild /p:Configuration="Release"

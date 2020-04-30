@@ -1,10 +1,10 @@
 {
-  "name": "iso3dfd_dpcpp",
+  "name": "mpi_dpcpp",
   "categories": [ "Toolkit/Intel® oneAPI HPC Toolkit" ],
-  "description": "A finite difference stencil kernel for solving 3D acoustic isotropic wave equation",
+  "description": "MPI_DPCPP: Using Intel® oneAPI DPC++ Language in MPI",
   "toolchain": [ "dpcpp" ],
   "targetDevice": [ "CPU", "GPU" ],
   "languages": [ { "cpp": {} } ],
   "os": [ "linux", "windows" ],
-  "builder": [ "ide" ]
+    "builder": [ "ide", "cmake" ]
 }

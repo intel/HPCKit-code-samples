@@ -1,5 +1,6 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 add_executable (mandelbrot main.cpp)
 target_link_libraries(mandelbrot OpenCL sycl $ENV{ONEAPI_ROOT}/compiler/latest/linux/lib/libsycl-complex.o)
-add_custom_target (run ./mandelbrot)
+#add_custom_target (run ./mandelbrot)
+add_custom_target(run ${CMAKE_COMMAND} -E env SYCL_BE=PI_OPENCL ./mandelbrot)
