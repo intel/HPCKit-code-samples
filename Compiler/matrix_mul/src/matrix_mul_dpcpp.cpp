@@ -5,175 +5,155 @@
 // =============================================================
 
 /**
- * matrix_mul multiplies together two large matrices and computes on both the
- * CPU and offload device, then compares results.  If the code executes on both
- * CPU and the offload device, the name of the offload device and a success
- * message are displayed. 
- * 
+ * Matrix_mul multiplies two large matrices both the CPU and the offload device,
+ * then compares results. If the code executes on both CPU and the offload
+ * device, the name of the offload device and a success message are displayed.
+ *
  * For comprehensive instructions regarding DPC++ Programming, go to
- * https://software.intel.com/en-us/oneapi-programming-guide and search based
- * on relevant terms noted in the comments.
+ * https://software.intel.com/en-us/oneapi-programming-guide and search based on
+ * relevant terms noted in the comments.
  */
-
 
 #include <CL/sycl.hpp>
 #include <iostream>
 #include <limits>
+#include "dpc_common.hpp"
 
 using namespace std;
-using namespace cl::sycl;
+using namespace sycl;
 
 /**
  * Each element of the product matrix c[i][j] is computed from a unique row and
  * column of the factor matrices, a[i][k] and b[k][j]
  */
 
-// Matrix size constants
-#define SIZE 1200  // Must be a multiple of 8.
-#define M SIZE / 8
-#define N SIZE / 4
-#define P SIZE / 2
+// Matrix size constants.
+constexpr int m_size = 150 * 8;  // Must be a multiple of 8.
+constexpr int M = m_size / 8;
+constexpr int N = m_size / 4;
+constexpr int P = m_size / 2;
 
 /**
- * Perform the matrix multiplication on host to verify results from device.
+ * Perform matrix multiplication on host to verify results from device.
  */
-int VerifyResult(double (*c_back)[P]);
+int VerifyResult(float (*c_back)[P]);
 
 int main() {
-  // host memory buffer that device will write data back before destruction
-  double(*c_back)[P] = new double[M][P];
+  // Host memory buffer that device will write data back before destruction.
+  float(*c_back)[P] = new float[M][P];
 
-  // intialize c_back
+  // Intialize c_back
   for (int i = 0; i < M; i++)
-    for (int j = 0; j < P; j++) c_back[i][j] = 0.0;
+    for (int j = 0; j < P; j++) c_back[i][j] = 0.0f;
 
-  auto asyncHandler = [&](cl::sycl::exception_list eL) {
-    for (auto &e : eL) {
-      try {
-        std::rethrow_exception(e);
-      } catch (cl::sycl::exception &e) {
-        std::cout << e.what() << std::endl;
-        std::cout << "fail" << std::endl;
-        // std::terminate() will exit the process, return non-zero, and output a
-        // message to the user about the exception
-        std::terminate();
-      }
-    }
-  };
-  // By sticking all the SYCL work in a {} block, we ensure
-  // all SYCL tasks must complete before exiting the block,
-  // because the destructor of resultBuf will wait.
-  {
-    // Initializing the devices queue with the default selector
-    // The device queue is used to enqueue the kernels and encapsulates
-    // all the states needed for execution
-    default_selector device_selector;
-    queue device_queue(device_selector, asyncHandler);
+  // Initialize the device queue with the default selector. The device queue is
+  // used to enqueue kernels. It encapsulates all states needed for execution.
+  try {
+    queue q(default_selector{}, dpc_common::exception_handler);
 
-    std::cout << "Device: "
-              << device_queue.get_device().get_info<info::device::name>()
-              << std::endl;
+    cout << "Device: " << q.get_device().get_info<info::device::name>() << "\n";
 
-    // Creating 2D buffers for matrices, buffer c is bound with host memory
-    // address c_back
-    buffer<double, 2> a(range<2>{M, N});
-    buffer<double, 2> b(range<2>{N, P});
-    buffer<double, 2> c(reinterpret_cast<double *>(c_back), range<2>{M, P});
+    // Create 2D buffers for matrices, buffer c is bound with host memory c_back
+
+    buffer<float, 2> a(range(M, N));
+    buffer<float, 2> b(range(N, P));
+    buffer c(reinterpret_cast<float *>(c_back), range(M, P));
 
     cout << "Problem size: c(" << M << "," << P << ") = a(" << M << "," << N
-         << ") * b(" << N << "," << P << ")" << std::endl;
+         << ") * b(" << N << "," << P << ")\n";
 
-    // Using three command groups to illustrate execution orders.
-    // The way to use the first two command groups to initialize matrices
-    // is not the most efficient way. Just for demonstrating the implicit
-    // multiple command group execution ordering.
+    // Using three command groups to illustrate execution order. The use of
+    // first two command groups for initializing matrices is not the most
+    // efficient way. It just demonstrates the implicit multiple command group
+    // execution ordering.
 
-    // Submitting command group to queue to initialize matrix a
-    device_queue.submit([&](handler &cgh) {
-      // Getting write only access to the buffer on a device
-      auto Accessor = a.get_access<access::mode::write>(cgh);
-      // Executing kernel
-      cgh.parallel_for(range<2>{M, N}, [=](id<2> index) {
-        // a is identity matrix
-        Accessor[index] = 1.0;
+    // Submit command group to queue to initialize matrix a
+    q.submit([&](handler &h) {
+      // Get write only access to the buffer on a device.
+      auto accessor = a.get_access<access::mode::write>(h);
+
+      // Execute kernel.
+      h.parallel_for(range(M, N), [=](id<2> index) {
+        // Each element of matrix a is 1.
+        accessor[index] = 1.0f;
       });
     });
 
-    // Submitting command group to queue to initialize matrix b
-    device_queue.submit([&](handler &cgh) {
-      // Getting write only access to the buffer on a device
-      auto Accessor = b.get_access<access::mode::write>(cgh);
-      // Executing kernel
-      cgh.parallel_for(range<2>{N, P}, [=](id<2> index) {
-        // each column of b is the sequence 1,2,...,N
-        Accessor[index] = index[0] + 1.;
+    // Submit command group to queue to initialize matrix b
+    q.submit([&](handler &h) {
+      // Get write only access to the buffer on a device
+      auto accessor = b.get_access<access::mode::write>(h);
+
+      // Execute kernel.
+      h.parallel_for(range(N, P), [=](id<2> index) {
+        // Each column of b is the sequence 1,2,...,N
+        accessor[index] = index[0] + 1.0f;
       });
     });
 
-    // Submitting command group to queue to compute matrix mulitiplication c=a*b
-    device_queue.submit([&](handler &cgh) {
+    // Submit command group to queue to multiply matrices: c = a * b
+    q.submit([&](handler &h) {
       // Read from a and b, write to c
-      auto A = a.get_access<access::mode::read>(cgh);
-      auto B = b.get_access<access::mode::read>(cgh);
-      auto C = c.get_access<access::mode::write>(cgh);
+      auto A = a.get_access<access::mode::read>(h);
+      auto B = b.get_access<access::mode::read>(h);
+      auto C = c.get_access<access::mode::write>(h);
 
-      int WidthA = a.get_range()[1];
+      int width_a = a.get_range()[1];
 
-      // Executing kernel
-      cgh.parallel_for(range<2>{M, P}, [=](id<2> index) {
-        // Get global position in Y direction
+      // Execute kernel.
+      h.parallel_for(range(M, P), [=](id<2> index) {
+        // Get global position in Y direction.
         int row = index[0];
-        // Get global position in X direction
+        // Get global position in X direction.
         int col = index[1];
 
-        double sum = 0.0;
-        // Compute the result of one element in c
-        for (int i = 0; i < WidthA; i++) {
+        float sum = 0.0f;
+
+        // Compute the result of one element of c
+        for (int i = 0; i < width_a; i++) {
           sum += A[row][i] * B[i][col];
         }
 
         C[index] = sum;
       });
-
     });
-  }  // End of scope, so we wait for kernel producing result data to host memory
-     // c_back to complete
+  } catch (sycl::exception const &e) {
+    cout << "An exception is caught while multiplying matrices.\n";
+    terminate();
+  }
 
   int result;
+  cout << "Result of matrix multiplication using DPC++: ";
   result = VerifyResult(c_back);
   delete[] c_back;
 
   return result;
 }
 
-bool ValueSame(double a, double b) {
-  return std::fabs(a - b) < std::numeric_limits<double>::epsilon();
+bool ValueSame(float a, float b) {
+  return fabs(a - b) < numeric_limits<float>::epsilon();
 }
 
-int VerifyResult(double (*c_back)[P]) {
-  // Check that the results are correct by comparing with host computing
+int VerifyResult(float (*c_back)[P]) {
+  // Check that the results are correct by comparing with host computing.
   int i, j, k;
 
-  // 2D arrays on host side
-  double(*a_host)[N];
-  double(*b_host)[P];
-  double(*c_host)[P];
+  // 2D arrays on host side.
+  float(*a_host)[N] = new float[M][N];
+  float(*b_host)[P] = new float[N][P];
+  float(*c_host)[P] = new float[M][P];
 
-  a_host = new double[M][N];
-  b_host = new double[N][P];
-  c_host = new double[M][P];
-
-  // a_host is identity matrix
+  // Each element of matrix a is 1.
   for (i = 0; i < M; i++)
-    for (j = 0; j < N; j++) a_host[i][j] = 1.0;
+    for (j = 0; j < N; j++) a_host[i][j] = 1.0f;
 
-  // each column of b_host is the sequence 1,2,...,N
+  // Each column of b_host is the sequence 1,2,...,N
   for (i = 0; i < N; i++)
-    for (j = 0; j < P; j++) b_host[i][j] = i + 1.;
+    for (j = 0; j < P; j++) b_host[i][j] = i + 1.0f;
 
-  // c_host is initialized to zero
+  // c_host is initialized to zero.
   for (i = 0; i < M; i++)
-    for (j = 0; j < P; j++) c_host[i][j] = 0;
+    for (j = 0; j < P; j++) c_host[i][j] = 0.0f;
 
   for (i = 0; i < M; i++) {
     for (k = 0; k < N; k++) {
@@ -184,34 +164,36 @@ int VerifyResult(double (*c_back)[P]) {
     }
   }
 
-  bool MismatchFound = false;
+  bool mismatch_found = false;
 
-  // compare host side results with the result buffer from device side: print
-  // fail data 5 times only.
-  int printf_count = 0;
+  // Compare host side results with the result buffer from device side: print
+  // mismatched data 5 times only.
+  int print_count = 0;
+
   for (i = 0; i < M; i++) {
     for (j = 0; j < P; j++) {
       if (!ValueSame(c_back[i][j], c_host[i][j])) {
-        cout << "fail - The result is incorrect for element: [" << i << ", "
+        cout << "Fail - The result is incorrect for element: [" << i << ", "
              << j << "], expected: " << c_host[i][j]
-             << " , but got: " << c_back[i][j] << std::endl;
-        MismatchFound = true;
-        printf_count++;
-        if (printf_count >= 5) break;
+             << ", but found: " << c_back[i][j] << "\n";
+        mismatch_found = true;
+        print_count++;
+        if (print_count == 5) break;
       }
     }
-    if (printf_count >= 5) break;
+
+    if (print_count == 5) break;
   }
 
   delete[] a_host;
   delete[] b_host;
   delete[] c_host;
 
-  if (!MismatchFound) {
-    cout << "success - The results are correct!" << std::endl;
+  if (!mismatch_found) {
+    cout << "Success - The results are correct!\n";
     return 0;
   } else {
-    cout << "fail - The results mis-match!" << std::endl;
+    cout << "Fail - The results mismatch!\n";
     return -1;
   }
 }

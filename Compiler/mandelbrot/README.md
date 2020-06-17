@@ -1,49 +1,96 @@
-# Mandelbrot 
-  
-## Key implementation details 
-Mandelbrot is a set that contains all complex numbers c such that z(n + 1) = z(n)^2 + c remains bounded and does not diverge. n starts from 0 and the plot generated is unique for every n. 
+# `Mandelbrot` Sample
 
-mandelCPP.hpp contains the serial implementation: we start by initializing a matrix of 120 x 120. Then, for each element in the matrix, we calculate a point by generating a complex number corresponding to the element's row and column indices and returning the number of iterations such that the absolute value of the complex number is less than 2. The maximum number of iterations allowed is 100 for sake of computation time. Then, we draw a point if the number of iterations is greater than or equal to the maximum number of iterations, aka if the complex number didn't diverge.  
+Mandelbrot is an infinitely complex fractal patterning that is derived from a simple formula.  It demonstrates using DPC++ for offloading computations to a GPU (or other devices) and shows how processing time can be optimized and improved with parallelism.
 
-mandleSYCL.hpp contains the parallel implementation. Note that the matrix is still 120 x 120 and the maximum number of iterations is 100. When iterating through the matrix, we use parallel_for to invoke the kernel function. The global range is passed in and the local range is chosen at runtime. The global id of the current work-item the kernel is executed for is also passed in to parallel_for. Then, each work-item, which processes one element in the matrix, executes the kernel code -- a complex number is generated and the number of iterations until divergence is computed. Displaying the image is done in serial.  
+For comprehensive instructions regarding DPC++ Programming, go to https://software.intel.com/en-us/oneapi-programming-guide and search based on relevant terms noted in the comments.
 
 | Optimized for                       | Description
 |:---                               |:---
 | OS                                | Linux* Ubuntu* 18.04; Windows 10
 | Hardware                          | Skylake with GEN9 or newer
-| Software                          | IIntel&reg; oneAPI DPC++ Compiler beta;
+| Software                          | Intel&reg; oneAPI DPC++ Compiler beta;
 | What you will learn               | How to offload the computation to GPU using Intel DPC++ compiler
 | Time to complete                  | 15 minutes
 
+## Purpose
+Mandelbrot is a DPC++ application that generates a fractal image by initializing a matrix of 512 x 512, where the computation at each point (pixel) is entirely independent of the computation at other points. The sample includes both parallel and serial calculation of the set, allowing for a direct comparison of results. The parallel implementation can demonstrate the use of Unified Shared Memory (USM) or buffers. You can modify parameters such as the number of rows, columns, and iterations to evaluate the difference in performance and load between USM and buffers. This is further described at the end of this document in the "Running the Sample" section.
+
+The code will attempt first to execute on an available GPU and fallback to the system's CPU if a compatible GPU is not detected.  The device used for compilation is displayed in the output along with elapsed time to render the mandelbrot image. This is helpful for comparing different offload implementations based on complexity of the computation. 
+
+## Key Implementation Details 
+The basic DPC++ implementation explained in the code includes device selector, buffer, accessor, kernel, and command groups.
+ 
 ## License  
 This code sample is licensed under MIT license. 
 
-## How to Build for CPU and GPU 
+## Building the `Mandelbrot` Program for CPU and GPU
 
-### on Linux
-*  Build the program using CMake
+### Running Samples In DevCloud
+If running a sample in the Intel DevCloud, remember that you must specify the compute node (CPU, GPU, FPGA) as well whether to run in batch or interactive mode. For more information see the Intel® oneAPI Base Toolkit Get Started Guide (https://devcloud.intel.com/oneapi/get-started/base-toolkit/)
 
-     cd mandelbrot && 
-     mkdir build &&
-     cd build &&
-     cmake .. &&
-     make
+### On a Linux* System
+Perform the following steps:
+1. Build the program using the following `cmake` commands. 
+``` 
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+```
 
-* Run the program  
-     make run  
+> Note: by default, exectables are created for both USM and buffers. You can build individually with the following: 
+>    Create buffers executable: make mandelbrot
+>    Create USM executable: make mandelbrot_usm
 
-* Clean the program  
-     make clean 
+2. Run the program (default uses buffers):
+    ```
+    make run
+    ```
+> Note: for USM use `make run_usm`
 
-### on Windows
+3. Clean the program using:
+    ```
+    make clean
+    ```
+
+### On a Windows* System Using Visual Studio* Version 2017 or Newer
 * Build the program using VS2017 or VS2019
       Right click on the solution file and open using either VS2017 or VS2019 IDE.
       Right click on the project in Solution explorer and select Rebuild.
       From top menu select Debug -> Start without Debugging.
 
+>If you see the following error message when compiling this sample:
+>
+```
+Error 'dpc_common.hpp' file not found
+```
+>You need to add the following directory to the list of include folders, that are required by your project, in your project's Visual Studio project property panel. The missing include folder is located at `%ONEAPI_ROOT%\dev-utilities\latest\include` on your development system.
+
 * Build the program using MSBuild
       Open "x64 Native Tools Command Prompt for VS2017" or "x64 Native Tools Command Prompt for VS2019"
       Run - MSBuild mandelbrot.sln /t:Rebuild /p:Configuration="Release"
 
-Note:To view Output image, please open the saved image mandelbrot.png.
-Note on Linux: There is a known issue discovered when running Mandelbrot on Level-Zero GPU driver,  so OpenCL GPU driver is used when running Mandelbrot bu setting environment variable “SYCL_BE=PI_OPENCL
+
+## Running the Sample
+### Application Parameters 
+You can modify the Mandelbrot parameters from within mandel.hpp. The configurable parameters include:
+    row_size = 
+    col_size =
+    max_iterations =
+    repetitions =
+The default row and column size is 512.  Max interatins and repetions are both 100.  By adjusting the parameters, you can observe how the performance varies using the different offload techniques.  Note that if the values drop below 128 for row and column, the output is limted to just text in the ouput window.
+
+### Example of Output
+```
+Platform Name: Intel(R) OpenCL HD Graphics
+  Platform Version: OpenCL 2.1 
+       Device Name: Intel(R) Gen9 HD Graphics NEO
+    Max Work Group: 256
+ Max Compute Units: 24
+
+Parallel Mandelbrot set using buffers.
+Rendered image output to file: mandelbrot.png (output too large to display in text)
+       Serial time: 0.0430331s
+     Parallel time: 0.00224131s
+Successfully computed Mandelbrot set.
+```

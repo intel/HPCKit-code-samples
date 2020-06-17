@@ -34,6 +34,9 @@ This code sample is licensed under MIT license
    * Build 1d_HeatTransfer
     
     cd 1d_HeatTransfer &&  
+    mkdir build &&
+    cd build &&
+    cmake .. &&
     make -j
 
    * Run the program
@@ -43,20 +46,16 @@ This code sample is licensed under MIT license
    * Clean the program  
     make clean
 
-### On a Windows* System Using a Command Line Interface
-   * Select **Programs** > **Intel oneAPI 2021** > **Intel oneAPI Command Prompt** to launch a command window.
-   * Build the program  mpi_dpcpp.exe using the following commands:
+### on Windows
+    * Build the program using VS2017 or VS2019
+      Right click on the solution file and open using either VS2017 or VS2019 IDE.
+      Right click on the project in Solution explorer and select Rebuild.
+      From top menu select Debug -> Start without Debugging.
 
-    cd 1d_HeatTransfer &&
-    nmake -f Makefile.win
-     
-   * Run the program
-
-    nmake -f Makefile.win run
-
-   * Clean the program  
-
-     nmake -f Makefile.win clean
+    * Build the program using MSBuild
+      Open "x64 Native Tools Command Prompt for VS2017" or "x64 Native Tools Command Prompt for
+ VS2019"
+      Run - MSBuild 1d_HeatTransfer.sln /t:Rebuild /p:Configuration="Release"
 
 ## How to Run  
    * Application Parameters   

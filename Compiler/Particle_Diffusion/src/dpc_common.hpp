@@ -24,21 +24,25 @@ static auto exception_handler = [](cl::sycl::exception_list eList) {
 };
 
 
-using Duration = std::chrono::duration<double>;
+// The TimeInterval is a simple RAII class.    
+// Construct the timer at the point you want to start timing.
+// Use the Elapsed() method to return time since construction.
 
-class MyTimer {
+class TimeInterval {
  public:
-   MyTimer() : start(std::chrono::steady_clock::now()) {}
+   TimeInterval() : start_(std::chrono::steady_clock::now()) {}
 
-  Duration elapsed() {
+  double Elapsed() {
     auto now = std::chrono::steady_clock::now();
-    return std::chrono::duration_cast<Duration>(now - start);
+    return std::chrono::duration_cast<Duration>(now - start_).count();
   }
 
  private:
-  std::chrono::steady_clock::time_point start;
+  using Duration = std::chrono::duration<double>;
+  std::chrono::steady_clock::time_point start_;
 };
 
 };  // namespace dpc_common
 
 #endif
+

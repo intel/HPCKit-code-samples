@@ -12,68 +12,70 @@
 
 using namespace std;
 
-// Matrix size constants
-#define SIZE 1200  // Must be a multiple of 8.
-#define M SIZE / 8
-#define N SIZE / 4
-#define P SIZE / 2
+// Matrix size constants.
+constexpr int m_size = 150 * 8;  // Must be a multiple of 8.
+constexpr int M = m_size / 8;
+constexpr int N = m_size / 4;
+constexpr int P = m_size / 2;
 
 /**
  * Each element of the product matrix c[i][j] is computed from a unique row and
  * column of the factor matrices, a[i][k] and b[k][j]
  */
-double a[M][N];
-double b[N][P];
-double c[M][P];
+float a[M][N];
+float b[N][P];
+float c[M][P];
 
 /**
- * Perform the matrix multiplication on CPU with OpenMP.
+ * Perform matrix multiplication on CPU with OpenMP.
  */
-void MatrixMulOpenMpCpu(double (*a)[N], double (*b)[P], double (*c)[P]);
+void MatrixMulOpenMpCpu(float (*a)[N], float (*b)[P], float (*c)[P]);
 
 /**
- * Perform the matrix multiplication on GPU with OpenMP offloading.
+ * Perform matrix multiplication on GPU with OpenMP offloading.
  */
 void __attribute__((noinline)) MatrixMulOpenMpGpuOffloading();
 
 /**
- * Perform the matrix multiplication on host to verify results from OpenMP.
+ * Perform matrix multiplication on host to verify results from OpenMP.
  */
-int VerifyResult(double (*c_back)[P]);
+int VerifyResult(float (*c_back)[P]);
 
 int main(void) {
   int Result1, Result2;
 
   cout << "Problem size: c(" << M << "," << P << ") = a(" << M << "," << N
-       << ") * b(" << N << "," << P << ")" << std::endl;
+       << ") * b(" << N << "," << P << ")\n";
 
-  cout << "We have " << omp_get_num_devices() << " device(s)" << std::endl;
-
-  cout << "The default device id: " << omp_get_default_device() << std::endl;
+  cout << "Running on " << omp_get_num_devices() << " device(s)\n";
+  cout << "The default device id: " << omp_get_default_device() << "\n";
 
   MatrixMulOpenMpCpu(a, b, c);
+  cout << "Result of matrix multiplication using OpenMP: ";
   Result1 = VerifyResult(c);
 
   MatrixMulOpenMpGpuOffloading();
+  cout << "Result of matrix multiplication using GPU offloading: ";
   Result2 = VerifyResult(c);
 
   return Result1 || Result2;
 }
 
-void MatrixMulOpenMpCpu(double (*a)[N], double (*b)[P], double (*c)[P]) {
+void MatrixMulOpenMpCpu(float (*a)[N], float (*b)[P], float (*c)[P]) {
   int i, j, k;
-  // a is identity matrix
-  for (i = 0; i < M; i++)
-    for (j = 0; j < N; j++) a[i][j] = 1.0;
 
-  // each column of b is the sequence 1,2,...,N
+  // Each element of matrix a is 1.
+  for (i = 0; i < M; i++)
+    for (j = 0; j < N; j++) a[i][j] = 1.0f;
+
+  // Each column of b is the sequence 1,2,...,N
   for (i = 0; i < N; i++)
-    for (j = 0; j < P; j++) b[i][j] = i + 1.;
+    for (j = 0; j < P; j++) b[i][j] = i + 1.0f;
 
   for (i = 0; i < M; i++)
-    for (j = 0; j < P; j++) c[i][j] = 0.0;
+    for (j = 0; j < P; j++) c[i][j] = 0.0f;
 
-// Parallelize by row.  The threads don't need to synchronize at
+// Parallelize by row. The threads don't need to synchronize at
 // loop end, so "nowait" can be used.
 #pragma omp for nowait private(i, j, k)
   for (i = 0; i < M; i++) {
@@ -89,21 +91,21 @@ void MatrixMulOpenMpCpu(double (*a)[N], double (*b)[P], double (*c)[P]) {
 void __attribute__((noinline)) MatrixMulOpenMpGpuOffloading() {
   int i, j, k;
 
-  // a is identity matrix
+  // Each element of matrix a is 1.
   for (i = 0; i < M; i++)
-    for (j = 0; j < N; j++) a[i][j] = 1.0;
+    for (j = 0; j < N; j++) a[i][j] = 1.0f;
 
-  // each column of b is the sequence 1,2,...,N
+  // Each column of b is the sequence 1,2,...,N
   for (i = 0; i < N; i++)
-    for (j = 0; j < P; j++) b[i][j] = i + 1.;
+    for (j = 0; j < P; j++) b[i][j] = i + 1.0f;
 
-  // c is initialized to zero
+  // c is initialized to zero.
   for (i = 0; i < M; i++)
-    for (j = 0; j < P; j++) c[i][j] = 0;
+    for (j = 0; j < P; j++) c[i][j] = 0.0f;
 
-// Parallelize on target device
-#pragma omp target teams distribute parallel for map(to : a, b) map( \
-    tofrom : c) thread_limit(128)
+// Parallelize on target device.
+#pragma omp target teams distribute parallel for map(to : a, b) \
+  map(tofrom : c) thread_limit(128)
   {
     for (i = 0; i < M; i++) {
       for (k = 0; k < N; k++) {
@@ -116,34 +118,30 @@ void __attribute__((noinline)) MatrixMulOpenMpGpuOffloading() {
   }
 }
 
-bool ValueSame(double a, double b) {
-  return std::fabs(a - b) < std::numeric_limits<double>::epsilon();
+bool ValueSame(float a, float b) {
+  return fabs(a - b) < numeric_limits<float>::epsilon();
 }
 
-int VerifyResult(double (*c_back)[P]) {
-  // Check that the results are correct by comparing with host computing
+int VerifyResult(float (*c_back)[P]) {
+  // Check that the results are correct by comparing with host computing.
   int i, j, k;
 
-  // 2D arrays on host side
-  double(*a_host)[N];
-  double(*b_host)[P];
-  double(*c_host)[P];
+  // 2D arrays on host side.
+  float(*a_host)[N] = new float[M][N];
+  float(*b_host)[P] = new float[N][P];
+  float(*c_host)[P] = new float[M][P];
 
-  a_host = new double[M][N];
-  b_host = new double[N][P];
-  c_host = new double[M][P];
-
-  // a_host is identity matrix
+  // Each element of matrix a is 1.
   for (i = 0; i < M; i++)
-    for (j = 0; j < N; j++) a_host[i][j] = 1.0;
+    for (j = 0; j < N; j++) a_host[i][j] = 1.0f;
 
-  // each column of b_host is the sequence 1,2,...,N
+  // Each column of b_host is the sequence 1,2,...,N
   for (i = 0; i < N; i++)
-    for (j = 0; j < P; j++) b_host[i][j] = i + 1.;
+    for (j = 0; j < P; j++) b_host[i][j] = i + 1.0f;
 
-  // c_host is initialized to zero
+  // c_host is initialized to zero.
   for (i = 0; i < M; i++)
-    for (j = 0; j < P; j++) c_host[i][j] = 0;
+    for (j = 0; j < P; j++) c_host[i][j] = 0.0f;
 
   for (i = 0; i < M; i++) {
     for (k = 0; k < N; k++) {
@@ -154,34 +152,36 @@ int VerifyResult(double (*c_back)[P]) {
     }
   }
 
-  bool MismatchFound = false;
+  bool mismatch_found = false;
 
-  // compare host side results with the result buffer from device side: print
-  // fail data 5 times only.
-  int printf_count = 0;
+  // Compare host side results with the result buffer from device side: print
+  // mismatched data 5 times only.
+  int print_count = 0;
+
   for (i = 0; i < M; i++) {
     for (j = 0; j < P; j++) {
       if (!ValueSame(c_back[i][j], c_host[i][j])) {
-        cout << "fail - The result is incorrect for element: [" << i << ", "
+        cout << "Fail - The result is incorrect for element: [" << i << ", "
              << j << "], expected: " << c_host[i][j]
-             << " , but got: " << c_back[i][j] << std::endl;
-        MismatchFound = true;
-        printf_count++;
-        if (printf_count >= 5) break;
+             << ", but found: " << c_back[i][j] << "\n";
+        mismatch_found = true;
+        print_count++;
+        if (print_count == 5) break;
       }
     }
-    if (printf_count >= 5) break;
+
+    if (print_count == 5) break;
   }
 
   delete[] a_host;
   delete[] b_host;
   delete[] c_host;
 
-  if (!MismatchFound) {
-    cout << "success - The results are correct!" << std::endl;
+  if (!mismatch_found) {
+    cout << "Success - The results are correct!\n";
     return 0;
   } else {
-    cout << "fail - The results mis-match!" << std::endl;
+    cout << "Fail - The results mismatch!\n";
     return -1;
   }
 }

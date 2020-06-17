@@ -34,8 +34,6 @@ Performance number tabulation [Dummy data for now]
 ## Key implementation details [optional]
 SYCL implementation explained. 
 
-You're encourage to use any infographics to increase readibility and clarity which is strongly recommended by UX team based on customer feedbacks. 
-
 
 ## License  
 This code sample is licensed under MIT license  

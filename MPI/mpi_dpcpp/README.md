@@ -26,9 +26,13 @@ This code sample is licensed under MIT license
 
 ### on a Linux* System  
    * Build mpi_dpcpp  
-    
-    cd mpi_dpcpp &&   
-    make -j 
+
+    export I_MPI_CXX=dpcpp
+    cd mpi_dpcpp &&
+    mkdir build &&
+    cd build &&
+    cmake .. &&
+    make -j
 
    * Run the program
 
@@ -37,20 +41,15 @@ This code sample is licensed under MIT license
    * Clean the program  
     make clean
 
-### On a Windows* System Using a Command Line Interface
-   * Select **Programs** > **Intel oneAPI 2021** > **Intel oneAPI Command Prompt** to launch a command window.
-   * Build the program  mpi_dpcpp.exe using the following `nmake` commands:
+### on Windows
+    * Build the program using VS2017 or VS2019
+      Right click on the solution file and open using either VS2017 or VS2019 IDE.
+      Right click on the project in Solution explorer and select Rebuild.
+      From top menu select Debug -> Start without Debugging.
 
-    cd mpi_dpcpp &&
-    WinScript.bat
-
-   * Run the program
-
-    mpiexec -n 2 -host localhost ./mpi_dpcpp.exe
-
-   * Clean the program  
-
-    del mpi_dpcpp*
+    * Build the program using MSBuild
+      Open "x64 Native Tools Command Prompt for VS2017" or "x64 Native Tools Command Prompt for VS2019"
+      Run - MSBuild mpi_dpcpp.sln /t:Rebuild /p:Configuration="Release"
 
 ## How to Run  
    * Application Parameters   

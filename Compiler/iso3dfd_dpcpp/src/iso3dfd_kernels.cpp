@@ -47,19 +47,19 @@
  * SLM Padding can be used to eliminate SLM bank conflicts if
  * there are any
  */
-void iso_3dfd_iteration_slm(cl::sycl::nd_item<3> it, float *next, float *prev,
+void iso_3dfd_iteration_slm(sycl::nd_item<3> it, float *next, float *prev,
                             float *vel, const float *coeff, float *tab,
                             size_t nx, size_t nxy, size_t bx, size_t by,
                             size_t z_offset, int full_end_z) {
   // Compute local-id for each work-item
-  size_t id0 = it.get_local_id(2);
-  size_t id1 = it.get_local_id(1);
+  auto id0 = it.get_local_id(2);
+  auto id1 = it.get_local_id(1);
 
   // Compute the position in local memory each work-item
   // will fetch data from global memory into shared
   // local memory
-  size_t size0 = it.get_local_range(2) + 2 * HALF_LENGTH + PAD;
-  size_t identifiant = (id0 + HALF_LENGTH) + (id1 + HALF_LENGTH) * size0;
+  auto size0 = it.get_local_range(2) + 2 * HALF_LENGTH + PAD;
+  auto identifiant = (id0 + HALF_LENGTH) + (id1 + HALF_LENGTH) * size0;
 
   // We compute the start and the end position in the grid
   // for each work-item.
@@ -68,11 +68,11 @@ void iso_3dfd_iteration_slm(cl::sycl::nd_item<3> it, float *next, float *prev,
   // This position is calculated with the help of slice-ID and number of
   // grid points each work-item will process.
   // Offset of HALF_LENGTH is also used to account for HALO
-  size_t begin_z = it.get_global_id(0) * z_offset + HALF_LENGTH;
-  size_t end_z = begin_z + z_offset;
+  auto begin_z = it.get_global_id(0) * z_offset + HALF_LENGTH;
+  auto end_z = begin_z + z_offset;
   if (end_z > full_end_z) end_z = full_end_z;
 
-  size_t gid = (it.get_global_id(2) + bx) + ((it.get_global_id(1) + by) * nx) +
+  auto gid = (it.get_global_id(2) + bx) + ((it.get_global_id(1) + by) * nx) +
                (begin_z * nxy);
 
   // front and back temporary arrays are used to ensure
@@ -85,12 +85,12 @@ void iso_3dfd_iteration_slm(cl::sycl::nd_item<3> it, float *next, float *prev,
   float back[HALF_LENGTH];
   float c[HALF_LENGTH + 1];
 
-  for (unsigned int iter = 0; iter < HALF_LENGTH; iter++) {
+  for (auto iter = 0; iter < HALF_LENGTH; iter++) {
     front[iter] = prev[gid + iter * nxy];
   }
   c[0] = coeff[0];
 
-  for (unsigned int iter = 1; iter <= HALF_LENGTH; iter++) {
+  for (auto iter = 1; iter <= HALF_LENGTH; iter++) {
     back[iter - 1] = prev[gid - iter * nxy];
     c[iter] = coeff[iter];
   }
@@ -99,14 +99,14 @@ void iso_3dfd_iteration_slm(cl::sycl::nd_item<3> it, float *next, float *prev,
   // Set some flags to indicate if the current work-item
   // should read from global memory to shared local memory buffer
   // or not
-  const unsigned int items_X = it.get_local_range(2);
-  const unsigned int items_Y = it.get_local_range(1);
+  auto items_X = it.get_local_range(2);
+  auto items_Y = it.get_local_range(1);
 
   bool copyHaloY = false, copyHaloX = false;
   if (id1 < HALF_LENGTH) copyHaloY = true;
   if (id0 < HALF_LENGTH) copyHaloX = true;
 
-  for (size_t i = begin_z; i < end_z; i++) {
+  for (auto i = begin_z; i < end_z; i++) {
     // Shared Local Memory (SLM) optimizations (DPC++)
     // If work-item is flagged to read into SLM buffer
     if (copyHaloY) {
@@ -141,7 +141,7 @@ void iso_3dfd_iteration_slm(cl::sycl::nd_item<3> it, float *next, float *prev,
     // read from the SLM buffers
     float value = c[0] * front[0];
 #pragma unroll(HALF_LENGTH)
-    for (unsigned int iter = 1; iter <= HALF_LENGTH; iter++) {
+    for (auto iter = 1; iter <= HALF_LENGTH; iter++) {
       value +=
           c[iter] * (front[iter] + back[iter - 1] + tab[identifiant + iter] +
                      tab[identifiant - iter] + tab[identifiant + iter * size0] +
@@ -154,12 +154,12 @@ void iso_3dfd_iteration_slm(cl::sycl::nd_item<3> it, float *next, float *prev,
 
     // Input data in front and back are shifted to discard the
     // oldest value and read one new value.
-    for (unsigned int iter = HALF_LENGTH - 1; iter > 0; iter--) {
+    for (auto iter = HALF_LENGTH - 1; iter > 0; iter--) {
       back[iter] = back[iter - 1];
     }
     back[0] = front[0];
 
-    for (unsigned int iter = 0; iter < HALF_LENGTH; iter++) {
+    for (auto iter = 0; iter < HALF_LENGTH; iter++) {
       front[iter] = front[iter + 1];
     }
 
@@ -185,7 +185,7 @@ void iso_3dfd_iteration_slm(cl::sycl::nd_item<3> it, float *next, float *prev,
  * global work-items.
  *
  */
-void iso_3dfd_iteration_global(cl::sycl::nd_item<3> it, float *next,
+void iso_3dfd_iteration_global(sycl::nd_item<3> it, float *next,
                                float *prev, float *vel, const float *coeff,
                                int nx, int nxy, int bx, int by, int z_offset,
                                int full_end_z) {
@@ -196,11 +196,11 @@ void iso_3dfd_iteration_global(cl::sycl::nd_item<3> it, float *next,
   // This position is calculated with the help of slice-ID and number of
   // grid points each work-item will process.
   // Offset of HALF_LENGTH is also used to account for HALO
-  size_t begin_z = it.get_global_id(0) * z_offset + HALF_LENGTH;
-  size_t end_z = begin_z + z_offset;
+  auto begin_z = it.get_global_id(0) * z_offset + HALF_LENGTH;
+  auto end_z = begin_z + z_offset;
   if (end_z > full_end_z) end_z = full_end_z;
 
-  size_t gid = (it.get_global_id(2) + bx) + ((it.get_global_id(1) + by) * nx) +
+  auto gid = (it.get_global_id(2) + bx) + ((it.get_global_id(1) + by) * nx) +
                (begin_z * nxy);
 
   // front and back temporary arrays are used to ensure
@@ -213,11 +213,11 @@ void iso_3dfd_iteration_global(cl::sycl::nd_item<3> it, float *next,
   float back[HALF_LENGTH];
   float c[HALF_LENGTH + 1];
 
-  for (unsigned int iter = 0; iter <= HALF_LENGTH; iter++) {
+  for (auto iter = 0; iter <= HALF_LENGTH; iter++) {
     front[iter] = prev[gid + iter * nxy];
   }
   c[0] = coeff[0];
-  for (unsigned int iter = 1; iter <= HALF_LENGTH; iter++) {
+  for (auto iter = 1; iter <= HALF_LENGTH; iter++) {
     c[iter] = coeff[iter];
     back[iter - 1] = prev[gid - iter * nxy];
   }
@@ -230,7 +230,7 @@ void iso_3dfd_iteration_global(cl::sycl::nd_item<3> it, float *next,
 
   float value = c[0] * front[0];
 #pragma unroll(HALF_LENGTH)
-  for (unsigned int iter = 1; iter <= HALF_LENGTH; iter++) {
+  for (auto iter = 1; iter <= HALF_LENGTH; iter++) {
     value += c[iter] *
              (front[iter] + back[iter - 1] + prev[gid + iter] +
               prev[gid - iter] + prev[gid + iter * nx] + prev[gid - iter * nx]);
@@ -245,12 +245,12 @@ void iso_3dfd_iteration_global(cl::sycl::nd_item<3> it, float *next,
   while (begin_z < end_z) {
     // Input data in front and back are shifted to discard the
     // oldest value and read one new value.
-    for (unsigned int iter = HALF_LENGTH - 1; iter > 0; iter--) {
+    for (auto iter = HALF_LENGTH - 1; iter > 0; iter--) {
       back[iter] = back[iter - 1];
     }
     back[0] = front[0];
 
-    for (unsigned int iter = 0; iter < HALF_LENGTH; iter++) {
+    for (auto iter = 0; iter < HALF_LENGTH; iter++) {
       front[iter] = front[iter + 1];
     }
 
@@ -261,7 +261,7 @@ void iso_3dfd_iteration_global(cl::sycl::nd_item<3> it, float *next,
     // Stencil code to update grid point at position given by global id (gid)
     float value = c[0] * front[0];
 #pragma unroll(HALF_LENGTH)
-    for (unsigned int iter = 1; iter <= HALF_LENGTH; iter++) {
+    for (auto iter = 1; iter <= HALF_LENGTH; iter++) {
       value += c[iter] * (front[iter] + back[iter - 1] + prev[gid + iter] +
                           prev[gid - iter] + prev[gid + iter * nx] +
                           prev[gid - iter * nx]);
@@ -286,46 +286,46 @@ void iso_3dfd_iteration_global(cl::sycl::nd_item<3> it, float *next,
  *
  */
 
-bool iso_3dfd_device(cl::sycl::queue &q, float *ptr_next, float *ptr_prev,
+bool iso_3dfd_device(sycl::queue &q, float *ptr_next, float *ptr_prev,
                      float *ptr_vel, float *ptr_coeff, size_t n1, size_t n2,
                      size_t n3, size_t n1_Tblock, size_t n2_Tblock,
                      size_t n3_Tblock, size_t end_z, unsigned int nIterations) {
-  size_t nx = n1;
-  size_t nxy = n1 * n2;
+  auto nx = n1;
+  auto nxy = n1 * n2;
 
-  size_t bx = HALF_LENGTH;
-  size_t by = HALF_LENGTH;
+  auto bx = HALF_LENGTH;
+  auto by = HALF_LENGTH;
   
   // Display information about the selected device
   printTargetInfo(q, n1_Tblock, n2_Tblock);
 
-  size_t sizeTotal = (size_t)(nxy * n3);
+  auto sizeTotal = nxy * n3;
 
   {  // Begin buffer scope
     // Create buffers using DPC++ class buffer
-    buffer<float, 1> b_ptr_next(ptr_next, range<1>{sizeTotal});
-    buffer<float, 1> b_ptr_prev(ptr_prev, range<1>{sizeTotal});
-    buffer<float, 1> b_ptr_vel(ptr_vel, range<1>{sizeTotal});
-    buffer<float, 1> b_ptr_coeff(ptr_coeff, range<1>{HALF_LENGTH + 1});
+    buffer<float, 1> b_ptr_next(ptr_next, sizeTotal);
+    buffer<float, 1> b_ptr_prev(ptr_prev, sizeTotal);
+    buffer<float, 1> b_ptr_vel(ptr_vel, sizeTotal);
+    buffer<float, 1> b_ptr_coeff(ptr_coeff, HALF_LENGTH + 1);
 
     // Iterate over time steps
-    for (unsigned int k = 0; k < nIterations; k += 1) {
+    for (auto i = 0; i < nIterations; i += 1) {
       // Submit command group for execution
-      q.submit([&](handler &cgh) {
+      q.submit([&](auto &h) {
         // Create accessors
-        auto next = b_ptr_next.get_access<access::mode::read_write>(cgh);
-        auto prev = b_ptr_prev.get_access<access::mode::read_write>(cgh);
-        auto vel = b_ptr_vel.get_access<access::mode::read>(cgh);
+        auto next = b_ptr_next.get_access<access::mode::read_write>(h);
+        auto prev = b_ptr_prev.get_access<access::mode::read_write>(h);
+        auto vel = b_ptr_vel.get_access<access::mode::read>(h);
         auto coeff =
             b_ptr_coeff.get_access<access::mode::read,
-                                   access::target::constant_buffer>(cgh);
+                                   access::target::constant_buffer>(h);
         // Define local and global range
 
         // Define local ND range of work-items
         // Size of each DPC++ work-group selected here is a product of
         // n2_Tblock and n1_Tblock which can be controlled by the input
         // command line arguments
-        auto local_nd_range = range<3>(1, n2_Tblock, n1_Tblock);
+        auto local_nd_range = range(1, n2_Tblock, n1_Tblock);
 
         // Define global ND range of work-items
         // Size of total number of work-items is selected based on the
@@ -340,8 +340,7 @@ bool iso_3dfd_device(cl::sycl::queue &q, float *ptr_next, float *ptr_prev,
         // to allow auto-scaling of the total number of work-items
         // spawned to achieve full occupancy for small or larger accelerator
         // devices
-        auto global_nd_range =
-            range<3>((n3 - 2 * HALF_LENGTH) / n3_Tblock, (n2 - 2 * HALF_LENGTH),
+        auto global_nd_range = range((n3 - 2 * HALF_LENGTH) / n3_Tblock, (n2 - 2 * HALF_LENGTH),
                      (n1 - 2 * HALF_LENGTH));
 
 #ifdef USE_SHARED
@@ -358,29 +357,29 @@ bool iso_3dfd_device(cl::sycl::queue &q, float *ptr_next, float *ptr_prev,
         // Padding can be used to avoid SLM bank conflicts
         // By default padding is disabled in the sample code
         auto localRange_ptr_prev =
-            range<1>((n1_Tblock + (2 * HALF_LENGTH) + PAD) *
+            range((n1_Tblock + (2 * HALF_LENGTH) + PAD) *
                      (n2_Tblock + (2 * HALF_LENGTH)));
 
         //  Create an accessor for SLM buffer
         accessor<float, 1, access::mode::read_write, access::target::local> tab(
-            localRange_ptr_prev, cgh);
+            localRange_ptr_prev, h);
 
         // Send a DPC++ kernel (lambda) for parallel execution
         // The function that executes a single iteration is called
         // "iso_3dfd_iteration_slm"
         // alternating the 'next' and 'prev' parameters which effectively
         // swaps their content at every iteration.
-        if (k % 2 == 0)
-          cgh.parallel_for<class iso_3dfd_kernel>(
-              nd_range<3>{global_nd_range, local_nd_range}, [=](nd_item<3> it) {
+        if (i % 2 == 0)
+          h.parallel_for(
+              nd_range(global_nd_range, local_nd_range), [=](nd_item<3> it) {
                 iso_3dfd_iteration_slm(it, next.get_pointer(),
                                        prev.get_pointer(), vel.get_pointer(),
                                        coeff.get_pointer(), tab.get_pointer(),
                                        nx, nxy, bx, by, n3_Tblock, end_z);
               });
         else
-          cgh.parallel_for<class iso_3dfd_kernel_2>(
-              nd_range<3>{global_nd_range, local_nd_range}, [=](nd_item<3> it) {
+          h.parallel_for(
+              nd_range(global_nd_range, local_nd_range), [=](nd_item<3> it) {
                 iso_3dfd_iteration_slm(it, prev.get_pointer(),
                                        next.get_pointer(), vel.get_pointer(),
                                        coeff.get_pointer(), tab.get_pointer(),
@@ -397,17 +396,17 @@ bool iso_3dfd_device(cl::sycl::queue &q, float *ptr_next, float *ptr_prev,
         // "iso_3dfd_iteration_global"
         // alternating the 'next' and 'prev' parameters which effectively
         // swaps their content at every iteration.
-        if (k % 2 == 0)
-          cgh.parallel_for<class iso_3dfd_kernel>(
-              nd_range<3>{global_nd_range, local_nd_range}, [=](nd_item<3> it) {
+        if (i % 2 == 0)
+          h.parallel_for(
+              nd_range(global_nd_range, local_nd_range), [=](nd_item<3> it) {
                 iso_3dfd_iteration_global(it, next.get_pointer(),
                                           prev.get_pointer(), vel.get_pointer(),
                                           coeff.get_pointer(), nx, nxy, bx, by,
                                           n3_Tblock, end_z);
               });
         else
-          cgh.parallel_for<class iso_3dfd_kernel_2>(
-              nd_range<3>{global_nd_range, local_nd_range}, [=](nd_item<3> it) {
+          h.parallel_for(
+              nd_range(global_nd_range, local_nd_range), [=](nd_item<3> it) {
                 iso_3dfd_iteration_global(it, prev.get_pointer(),
                                           next.get_pointer(), vel.get_pointer(),
                                           coeff.get_pointer(), nx, nxy, bx, by,

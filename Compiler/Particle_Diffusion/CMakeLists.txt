@@ -3,7 +3,8 @@ cmake_minimum_required (VERSION 3.0)
 if(WIN32)
         set(CMAKE_CXX_COMPILER "dpcpp-cl")
 else()
-        set(CMAKE_CXX_COMPILER "dpcpp")
+    set(CMAKE_CXX_COMPILER "dpcpp")
+
 endif()
 
 # Set default build type to RelWithDebInfo if not specified

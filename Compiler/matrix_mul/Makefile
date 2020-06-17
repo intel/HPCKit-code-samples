@@ -1,5 +1,5 @@
 DPCPP_CXX = dpcpp
-DPCPP_CXXFLAGS = -g -o
+DPCPP_CXXFLAGS = -std=c++17 -g -o
 DPCPP_LDFLAGS = 
 DPCPP_EXE_NAME = matrix_mul_dpc
 DPCPP_SOURCES = src/matrix_mul_dpcpp.cpp
