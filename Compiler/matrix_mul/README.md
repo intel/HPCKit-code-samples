@@ -113,7 +113,6 @@ Result of matrix multiplication using DPC++: Success - The results are correct!
 Problem size: c(150,600) = a(150,300) * b(300,600)
 Running on 1 device(s)
 The default device id: 0
-success - The results are correct!
 Result of matrix multiplication using OpenMP: Success - The results are correct!
 Result of matrix multiplication using GPU offloading: Success - The results are correct!
 ```
